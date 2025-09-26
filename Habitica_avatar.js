@@ -9,7 +9,7 @@ export async function captureAvatar(userIdOrName) {
 
 
     const browser = await puppeteer.launch({
-        headless: true, // pode mudar para false pra ver o que tá acontecendo
+        headless: false, // pode mudar para false pra ver o que tá acontecendo
         defaultViewport: { width: 1024, height: 768 },
     });
 

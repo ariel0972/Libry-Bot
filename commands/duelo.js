@@ -3,6 +3,9 @@ const User = require("../database/models/user")
 const Canvas = require('@napi-rs/canvas');
 const { captureAvatar } = require("../Habitica_avatar");
 const { request, BalancedPool } = require("undici");
+const { AUTHOR_ID } = process.env
+
+
 
 module.exports = {
     cooldown: 10,
@@ -53,6 +56,7 @@ module.exports = {
 
         // Se deus quiser essa bomba funciona
         const HEADERS = (userId, Token) => ({
+            "x-client": `${AUTHOR_ID}-BotDiscord`,
             "x-api-user": userId,
             "x-api-key": Token,
             'Content-Type': "application/json",
@@ -71,9 +75,12 @@ module.exports = {
                 habitica: user,
                 id: desafiante.id,
                 hp: 100,
-                mp: 20 + data.data.stats.int * 1.5,
+                mp: {
+                    atual: 20 + data.data.stats.int * 1.5,
+                    max: 20 + data.data.stats.int * 1.5,
+                },
                 cd: 0,
-                classe: dataAlvo.data.stats.class,
+                classe: data.data.stats.class,
                 for: Math.floor(2 + data.data.stats.str + data.data.stats.lvl / 2),
                 int: Math.floor(1 + data.data.stats.int + data.data.stats.lvl / 2),
                 con: Math.floor(3 + data.data.stats.con + data.data.stats.lvl / 2),
@@ -142,7 +149,10 @@ module.exports = {
                     habitica: oponente,
                     id: alvo.id,
                     hp: 100,
-                    mp: 20 + dataAlvo.data.stats.int * 1.5,
+                    mp: {
+                        atual: 20 + dataAlvo.data.stats.int * 1.5,
+                        max: 20 + dataAlvo.data.stats.int * 1.5,
+                    },
                     cd: 0,
                     classe: dataAlvo.data.stats.class,
                     for: Math.floor(2 + dataAlvo.data.stats.str + dataAlvo.data.stats.lvl / 2),
@@ -170,27 +180,27 @@ module.exports = {
         }
 
         /* -----[Magia]------ */
-        function magic(classe) {
+        function magic(classe, lvl) {
             const classSkil = {
                 wizard: [
-                    { id: 'fireball', label: "Fire Ball" },
-                    { id: 'eter', label: "Força Etérea" },
-                    { id: 'stun', label: "Atordoar" },
+                    ...(lvl >= 15 ? [{ id: 'fireball', label: "🔥 Fire Ball" }] : []),
+                    ...(lvl >= 30 ? [{ id: 'eter', label: "🌀 Força Etérea - Beta" }] : []),
+                    ...(lvl >= 50 ? [{ id: 'stun', label: "💢 Atordoar - BETA" }] : []),
                 ],
                 warrior: [
-                    { id: 'smash', label: "Fire Ball" },
-                    { id: 'highdef', label: "Fire Ball" },
-                    { id: 'doublesmash', label: "Fire Ball" },
+                    ...(lvl >= 12 ? [{ id: 'smash', label: "💥 Golpe Brutal" }] : []),
+                    ...(lvl >= 25 ? [{ id: 'highdef', label: "🛡️ Defesa Elevada" }] : []),
+                    ...(lvl >= 40 ? [{ id: 'doublesmash', label: "⚔️ Golpe Duplo" }] : []),
                 ],
                 healer: [
-                    { id: 'fireball', label: "Fire Ball" },
-                    { id: 'fireball', label: "Fire Ball" },
-                    { id: 'fireball', label: "Fire Ball" },
+                    ...(lvl >= 10 ? [{ id: 'overheal', label: "💚 Over Heal" }] : []),
+                    ...(lvl >= 25 ? [{ id: 'moredef', label: "🛡️ Escudo Protetor" }] : []),
+                    ...(lvl >= 45 ? [{ id: 'blessing', label: "✨ Benção" }] : []),
                 ],
                 rogue: [
-                    { id: 'fireball', label: "Fire Ball" },
-                    { id: 'fireball', label: "Fire Ball" },
-                    { id: 'fireball', label: "Fire Ball" },
+                    ...(lvl >= 12 ? [{ id: 'stealth', label: "💨 Furtividade" }] : []),
+                    ...(lvl >= 30 ? [{ id: 'picpocket', label: "🤏 Mãos Ladras" }] : []),
+                    ...(lvl >= 42 ? [{ id: 'crithit', label: "💥 Golpe Critico" }] : []),
                 ]
             }
 
@@ -199,7 +209,7 @@ module.exports = {
             return new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId("magia_select")
-                    .setPlaceholder("Escolha sua magia")
+                    .setPlaceholder("🪄 Escolha sua magia ✨")
                     .addOptions(skills.map(skill => ({
                         label: skill.label,
                         value: skill.id
@@ -490,8 +500,8 @@ module.exports = {
             .setTitle("⚔️ Duelo Iniciado!")
             .setDescription(`Turno de <@${turno}>`)
             .addFields(
-                { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP \n 🔹${Math.max(0, stats[desafiante.id].mp)} MP`, inline: true },
-                { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP`, inline: true }
+                { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP \n🔹${Math.max(0, stats[desafiante.id].mp.atual)} MP`, inline: true },
+                { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP \n🔹${Math.max(0, stats[alvo.id].mp.atual)} MP`, inline: true }
             )
             .setColor("#f54269")
             .setFooter({ text: `${stats[alvo.id].id == "BOT" ? `Dificuldade: ${dif}` : " "}` });
@@ -504,7 +514,106 @@ module.exports = {
 
         const msg = await interaction.channel.send({ content: `Turno de ${turno == desafiante.id ? `<@${turno}>` : "BOT"}`, embeds: [duelEmbed], components: [row] });
 
+        async function iniciarDuelo() {
+
+        }
+        async function flipCoin() {
+
+        }
+        async function apostar() {
+
+        }
+        async function jogadorAtual() {
+
+        }
+        async function inimigo() {
+
+        }
+
+        const magicCollector = msg.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 300000 })
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 300000 });
+        let regen = 2
+
+        // ----[ Magias ]---- 
+        magicCollector.on("collect", async (select) => {
+            if (select.user.id !== turno) {
+                return select.reply({ content: "Não é seu turno!", ephemeral: true });
+            }
+
+            const jogadorAtual = turno;
+            const inimigo = jogadorAtual === desafiante.id ? alvo.id : desafiante.id;
+
+            let resultado = "";
+
+            const player1 = stats[jogadorAtual]
+            const player2 = stats[inimigo]
+
+            const classe = stats[jogadorAtual].classe
+            const lvl = stats[jogadorAtual].lvl
+
+            if (select.values[0] === "fireball") {
+                if (player1.mp.atual < 25) {
+                    await select.reply({ content: `Sem mana o suficiente`, flags: MessageFlags.Ephemeral })
+                    return
+                }
+                if (player1.cd > 0 && player1.magia.fireBall === true) {
+                    resultado = `<@${jogadorAtual}> tentou usar Bola de fogo, mas ficou sem força.`
+                    if (player1.cd = 0) player1.magia.fireBall = false
+                } else {
+                    let dano = Math.floor(Math.random() * 2 + player1.int * 0.9);
+                    const crit = Math.floor(Math.random() < 0.25 * (player1.per / 100))
+                    if (crit) dano = Math.floor(dano * 1.5)
+                    const def = player2.defendendo ? player2.con * 1.2 : player2.con * 0.6
+                    const danoFinal = Math.floor(Math.max(0, dano - def))
+                    player2.hp -= danoFinal;
+                    resultado = `**<@${jogadorAtual}> Usou uma Bola de Fogo 🔥 causou ${danoFinal} de dano! ${player2.defendendo ? "🛡️ Defendido" : ""} ${crit ? "💥CRITICO MÁGICO🪄!!" : ""}**`;
+
+                    player2.defendendo = false
+
+                    player1.mp.atual -= 25
+                    if (player1.mp.atual < 0) player1.mp.atual = 0
+                    player1.cd = 2
+                    player1.magia.fireBall = true
+                }
+            }
+
+            // Verifica vitória 🏆
+            if (player2.hp <= 0) {
+                magicCollector.stop()
+                collector.stop()
+                const finalEmbed = new EmbedBuilder()
+                    .setTitle("🏆 Vitória!")
+                    .setDescription(`<@${jogadorAtual}> venceu o duelo!`)
+                    .addFields(
+                        { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP`, inline: true },
+                        { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP`, inline: true }
+                    )
+                    .setColor("#57F287");
+
+                if (bet) {
+                    await fetch("https://habitica.com/api/v3/user", {
+                        method: 'put',
+                        headers: HEADERS(stats[jogadorAtual].habitica.habiticaUserId, stats[jogadorAtual].habitica.habiticaToken),
+                        body: JSON.stringify({
+                            "stats.gp": stats[jogadorAtual].gp + aposta
+                        })
+                    });
+                }
+                return select.update({ embeds: [finalEmbed], components: [] });
+            }
+
+            // Troca turno
+            turno = inimigo;
+
+            // Atualiza embed
+            duelEmbed.setDescription(`${resultado}\n\nTurno de ${turno === "BOT" ? nomeOponente : `<@${turno}>`}`);
+            duelEmbed.spliceFields(0, 2,
+                { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP \n🔹${Math.max(0, stats[desafiante.id].mp.atual)} MP`, inline: true },
+                { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP \n🔹${Math.max(0, stats[alvo.id].mp.atual)} MP`, inline: true }
+            );
+
+            await select.update({ content: `<@${turno}>`, embeds: [duelEmbed], components: [row, magic(classe, lvl)] });
+        })
 
         collector.on("collect", async (btn) => {
             if (btn.user.id !== turno) {
@@ -520,6 +629,7 @@ module.exports = {
             const player2 = stats[inimigo]
 
             const classe = stats[jogadorAtual].classe
+            const lvl = stats[jogadorAtual].lvl
 
             if (btn.customId === "atacar") {
                 let dano = Math.floor(Math.random() * 5 + player1.for * 0.8);
@@ -535,8 +645,9 @@ module.exports = {
             } else if (btn.customId === "defender") {
                 player1.defendendo = true
                 resultado = `**<@${jogadorAtual}> se defende!**`;
+
             } else if (btn.customId === "curar") {
-                if (player1.mp < 10) {
+                if (player1.mp.atual < 10) {
                     await btn.reply({ content: `Sem mana o suficiente`, flags: MessageFlags.Ephemeral })
                     return
                 }
@@ -550,15 +661,25 @@ module.exports = {
                 player1.hp += cura;
                 if (player1.hp > 100) player1.hp = 100;
 
-                player1.mp -= 10
-                if (player1.hmp < 0) player1.hp = 0;
+                player1.mp.atual -= 10
+                if (player1.mp.atual < 0) player1.mp.atual = 0;
 
                 resultado = `<@${jogadorAtual}> recuperou **${cura} de Hp❤️!**`;
             }
 
+            // regen de Mana
+            if (regen <= 0 && player1.mp.atual < player1.mp.max) {
+                player1.mp.atual += Math.floor(1 + player1.int * 0.2)
+
+                if (player1.mp.atual > player1.mp.max) player1.mp.atual = player1.mp.max
+                regen += 2
+            }
+            regen--
+
             // Verifica vitória 🏆
             if (player2.hp <= 0) {
                 collector.stop();
+                magicCollector.stop()
                 const finalEmbed = new EmbedBuilder()
                     .setTitle("🏆 Vitória!")
                     .setDescription(`<@${jogadorAtual}> venceu o duelo!`)
@@ -586,11 +707,11 @@ module.exports = {
             // Atualiza embed
             duelEmbed.setDescription(`${resultado}\n\nTurno de ${turno === "BOT" ? nomeOponente : `<@${turno}>`}`);
             duelEmbed.spliceFields(0, 2,
-                { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP \n🔹${Math.max(0, stats[desafiante.id].mp)} MP`, inline: true },
-                { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP \n🔹${Math.max(0, stats[alvo.id].mp)} MP`, inline: true }
+                { name: stats[desafiante.id].nome, value: `❤️ ${Math.max(0, stats[desafiante.id].hp)} HP \n🔹${Math.max(0, stats[desafiante.id].mp.atual)} MP`, inline: true },
+                { name: stats[alvo.id].nome, value: `❤️ ${Math.max(0, stats[alvo.id].hp)} HP \n🔹${Math.max(0, stats[alvo.id].mp.atual)} MP`, inline: true }
             );
 
-            await btn.update({ content: `<@${turno}>`, embeds: [duelEmbed], components: [row, magic(classe)] });
+            await btn.update({ content: `<@${turno}>`, embeds: [duelEmbed], components: [row, magic(classe, lvl)] });
 
             // BOT joga automaticamente
             if (turno === "BOT") {

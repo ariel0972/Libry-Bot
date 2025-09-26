@@ -1,12 +1,12 @@
-const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
+const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require("discord.js")
 const User = require("../database/models/user");
 const { AUTHOR_ID } = process.env
 
 module.exports = {
     cooldown: 10,
     data: new SlashCommandBuilder()
-        .setName("doar")
-        .setDescription("Doe um pouco de ouro para um colega habiticano seu.")
+        .setName("adicionar-moeda")
+        .setDescription("[ADMIN] Dâ moedas para o amiguinho")
         .addUserOption(option => option
             .setName("membro")
             .setDescription("Membro ao qual vai doar dinheiro")
@@ -16,7 +16,8 @@ module.exports = {
             .setDescription("A quantidade de ouro que você enviará")
             .setMinValue(0.01)
             .setMaxValue(100)
-            .setRequired(true)),
+            .setRequired(true))
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction) {
         const user = await User.findOne({ discordId: interaction.user.id });
         const URLbase = 'https://habitica.com/api/v3'
@@ -46,10 +47,7 @@ module.exports = {
             headers: HEADERS(user.habiticaUserId, user.habiticaToken)
         })
         const sendData = await resUser.json()
-        const userGold = sendData.data.stats.gp
         const userName = sendData.data.auth.local.username
-        
-        if (gold > userGold) return interaction.reply("Você é Pobre! Não tem ouro o suficiente.")
 
         const resDest = await fetch(`${URLbase}/user`, {
             method: 'GET',
@@ -59,19 +57,13 @@ module.exports = {
         const destGold = destData.data.stats.gp
         const destName = destData.data.auth.local.username
 
-        await fetch(`${URLbase}/user`, {
-            method: 'PUT',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken),
-            body: JSON.stringify({
-                "stats.gp": userGold - gold
-            })
-        })
+        const goldTotal = destGold + gold
 
         await fetch(`${URLbase}/user`, {
             method: 'PUT',
             headers: HEADERS(destID.habiticaUserId, destID.habiticaToken),
             body: JSON.stringify({
-                "stats.gp": destGold + gold
+                "stats.gp": goldTotal
             })
         })
 
@@ -79,11 +71,11 @@ module.exports = {
             method: 'POST',
             headers: HEADERS(user.habiticaUserId, user.habiticaToken),
             body: JSON.stringify({
-                'message': `> @${userName} doou **${gold.toFixed(2)} 🪙** para @${destName}`
+                'message': `> @${userName} adicionou **${gold.toFixed(2)} 🪙** Para @${destName}`
             })
         })
 
-        await interaction.reply(`Você doou **${gold.toFixed(2)}** para ${dest.displayName}`)
+        await interaction.reply(`Você deu **${gold.toFixed(2)}** para ${dest.displayName}`)
         
     }
 }

@@ -2,7 +2,9 @@ const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = r
 const User = require("../database/models/user");
 const Canvas = require('@napi-rs/canvas');
 const { captureAvatar } = require("../Habitica_avatar");
+const { GerarAvatar } = require("../costumeAvatar.js")
 const { request } = require("undici");
+const { AUTHOR_ID } = process.env
 
 module.exports = {
     cooldown: 10,
@@ -23,6 +25,7 @@ module.exports = {
         }
 
         const HEADERS = {
+            "x-client": `${AUTHOR_ID}-BotDiscord`,
             "x-api-user": user.habiticaUserId,
             "x-api-key": user.habiticaToken,
             'Content-Type': "application/json",
@@ -108,11 +111,11 @@ module.exports = {
             const collectInfo = questInfo.collect
             let totalItens = 0
             let totalColetado = 0
-    
+
             for (const items in collectInfo) {
                 const required = collectInfo[items].count
                 const atual = pickQuest[items] || 0
-    
+
                 totalItens += required
                 totalColetado += atual
             }
@@ -127,8 +130,34 @@ module.exports = {
         const token = await Canvas.loadImage("./assets/class_token.png")
         const coin = await Canvas.loadImage("./assets/game_class/gold.png")
         const classe = await Canvas.loadImage(classePath)
+        
+        const avatarHabitica = {
+            head: data.data.items.gear.costume.head,
+            armor: data.data.items.gear.costume.armor,
+            weapon: data.data.items.gear.costume.weapon,
+            shield: data.data.items.gear.costume.shield,
+            back: data.data.items.gear.costume.back,
+            body: data.data.items.gear.costume.body,
+            eyewear: data.data.items.gear.costume.eyewear,
+            headAccessory: data.data.items.gear.costume.headAccessory,
+            preferences: {
+                hair: {
+                    color: data.data.preferences.hair.color,
+                    base: data.data.preferences.hair.base,
+                    bangs: data.data.preferences.hair.bangs,
+                    beard: data.data.preferences.hair.beard,
+                    mustache: data.data.preferences.hair.mustache,
+                    flower: data.data.preferences.hair.flower
+                },
+                skin: data.data.preferences.skin,
+                shirt: data.data.preferences.shirt,
+                chair: data.data.preferences.chair,
+                size: data.data.preferences.size,
+                background: data.data.preferences.background
+            }
+        }
 
-        const body = await captureAvatar(user.habiticaUserId)
+        const body = await GerarAvatar(avatarHabitica)
         const avatar = await Canvas.loadImage(body)
 
         ctx.drawImage(card, 0, 0, canvas.width, canvas.height)
@@ -152,6 +181,7 @@ module.exports = {
             dailys: dailys,
             Maxday: dailysMax,
         }
+
 
         //stats bar
         ctx.lineJoin = 'bevel'

@@ -105,7 +105,7 @@ module.exports = {
         if (tags) {
             try {
                 const HEADERS = {
-                    // "x-client": `${user.habiticaUserId}-BotDiscord`,
+                    "x-client": `${user.habiticaUserId}-BotDiscord`,
                     "x-api-user": user.habiticaUserId,
                     "x-api-key": user.habiticaToken,
                     'Content-Type': "application/json",
@@ -150,6 +150,7 @@ module.exports = {
             }
 
             const HEADERS = {
+                "x-client": `${user.habiticaUserId}-BotDiscord`,
                 "x-api-user": user.habiticaUserId,
                 "x-api-key": user.habiticaToken,
                 'Content-Type': "application/json",
