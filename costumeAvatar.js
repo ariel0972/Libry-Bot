@@ -25,6 +25,8 @@ export async function GerarAvatar(costume, Path) {
         })
     }
 
+    layers.push()
+
     // if (costume.currentMount){
     //     layers.push({
     //         url: `${baseURL}Mount_Body_${costume.currentMount}.png`,

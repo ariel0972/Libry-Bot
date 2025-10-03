@@ -4,6 +4,7 @@ const Canvas = require('@napi-rs/canvas');
 const { captureAvatar } = require("../Habitica_avatar");
 const { GerarAvatar } = require("../costumeAvatar.js")
 const { request } = require("undici");
+const { fetchHabiticaUser } = require("../utils/habiticaPlayer.js");
 const { AUTHOR_ID } = process.env
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
             interaction.editReply({ content: "Você não está vinculado ao Bot", flags: MessageFlags.Ephemeral })
             return
         }
-
+        
         const HEADERS = {
             "x-client": `${AUTHOR_ID}-BotDiscord`,
             "x-api-user": user.habiticaUserId,
@@ -237,7 +238,6 @@ module.exports = {
                 files: [foto]
             })
         }
-
 
         if (questInfo.collect) {
             await interaction.editReply({
