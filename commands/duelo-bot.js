@@ -9,16 +9,8 @@ const { AUTHOR_ID } = process.env
 module.exports = {
     cooldown: 10,
     data: new SlashCommandBuilder()
-        .setName("duelo")
-        .setDescription("BETA!!! Tire um duelo Habiticano com alguém")
-        .addUserOption(option => option
-            .setName("alvo")
-            .setDescription("Com quem você irá tirar x1")
-        )
-        .addBooleanOption(option => option
-            .setName("contra-bot")
-            .setDescription("Contra um robô?")
-        )
+        .setName("desafio-bot")
+        .setDescription("[BETA] Tire um duelo Habiticano com o Bot")
         .addStringOption(option => option
             .setName("dificuldade")
             .setDescription("adiciona dificuldade ao duelo com o bot")
@@ -30,7 +22,7 @@ module.exports = {
         )
         .addBooleanOption(option => option
             .setName("apostar")
-            .setDescription("Aposta moedas do Habitica naprincadeira!")
+            .setDescription("Aposta moedas do Habitica na brincadeira!")
         ),
 
     async execute(interaction) {

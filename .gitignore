@@ -1,4 +1,6 @@
+# Pastas
 /node_modules
+.package-lock.json
 .env
 config.json
 test.js

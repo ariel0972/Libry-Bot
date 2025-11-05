@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
 const User = require("../database/models/user");
+const { fetchHabiticaUser } = require("../utils/habiticaPlayer");
 const { AUTHOR_ID } = process.env
 
 module.exports = {
@@ -19,8 +20,6 @@ module.exports = {
             .setRequired(true)),
     async execute(interaction) {
         const user = await User.findOne({ discordId: interaction.user.id });
-        const URLbase = 'https://habitica.com/api/v3'
-
 
         const dest = interaction.options.getUser('membro')
         const gold = interaction.options.getNumber('quantidade')
@@ -33,57 +32,27 @@ module.exports = {
         else if(!destID) {
             return await interaction.reply("❌ O destinatário não está vinculado ao bot.")
         }
-
-        const HEADERS = (userId, Token) => ({
-            "x-api-user": userId,
-            "x-api-key": Token,
-            'Content-Type': "application/json",
-            "x-client": `${AUTHOR_ID}-BotDiscord`
-        })
-
-        const resUser = await fetch(`${URLbase}/user`, {
-            method: 'GET',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken)
-        })
-        const sendData = await resUser.json()
-        const userGold = sendData.data.stats.gp
-        const userName = sendData.data.auth.local.username
+        
+        const resUser = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken)
+        const userGold = resUser.stats.gp
+        const userName = resUser.auth.local.username
         
         if (gold > userGold) return interaction.reply("Você é Pobre! Não tem ouro o suficiente.")
 
-        const resDest = await fetch(`${URLbase}/user`, {
-            method: 'GET',
-            headers: HEADERS(destID.habiticaUserId, destID.habiticaToken)
-        })
-        const destData = await resDest.json()
-        const destGold = destData.data.stats.gp
-        const destName = destData.data.auth.local.username
+        const resDest = await fetchHabiticaUser(destID.habiticaUserId, destID.habiticaToken)
+        const destGold = resDest.stats.gp
+        const destName = resDest.auth.local.username
 
-        await fetch(`${URLbase}/user`, {
-            method: 'PUT',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken),
-            body: JSON.stringify({
-                "stats.gp": userGold - gold
-            })
-        })
+        const msg = {
+            'message': `> @${userName} doou **${gold.toFixed(2)} 🪙** para @${destName}`
+        }
 
-        await fetch(`${URLbase}/user`, {
-            method: 'PUT',
-            headers: HEADERS(destID.habiticaUserId, destID.habiticaToken),
-            body: JSON.stringify({
-                "stats.gp": destGold + gold
-            })
-        })
+        await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'user', 'PUT', {'stats.gp': userGold - gold})
 
-        await fetch(`${URLbase}/groups/party/chat`, {
-            method: 'POST',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken),
-            body: JSON.stringify({
-                'message': `> @${userName} doou **${gold.toFixed(2)} 🪙** para @${destName}`
-            })
-        })
+        await fetchHabiticaUser(destID.habiticaUserId, destID.habiticaToken, 'user', 'PUT', {'stats.gp': destGold + gold})
 
         await interaction.reply(`Você doou **${gold.toFixed(2)}** para ${dest.displayName}`)
         
+        await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'groups/party/chat', 'post', msg)
     }
 }

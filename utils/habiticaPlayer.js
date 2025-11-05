@@ -1,10 +1,10 @@
-const dotenv =  require('dotenv')
+const dotenv = require('dotenv')
 dotenv.config()
 const { AUTHOR_ID, AUTHOR_TOKEN } = process.env
 // import User from '../database/models/user'
 
 /**
- * @typedef { 'user' | 'tasks/user' | 'tasks/{ID}' | 'groups/party/chat'} path
+ * @typedef { 'user' | 'tasks/user' | 'tasks/{ID}' | 'groups/party/chat' | 'groups/party'} path
  * @typedef { 'GET' | 'POST' | 'PUT' | 'DELETE' } HttpMethod 
  */
 
@@ -17,9 +17,9 @@ const { AUTHOR_ID, AUTHOR_TOKEN } = process.env
  * @returns {Promise<object>} Os dados de usuário da API.
  * @throws {Error} Se a chamada da API falhar.
  * 
- * @since 2025 by Ariel - v0.2
+ * @since 2025 by Ariel - v0.2.1
  */
-async function fetchHabiticaUser(userID, tokenAPI, Path='user', method='GET', body=null) {
+async function fetchHabiticaUser(userID, tokenAPI, Path = 'user', method = 'GET', body = null) {
     const HEADERS = {
         "x-client": `${AUTHOR_ID}-BotDiscord`,
         "x-api-user": userID,
@@ -46,7 +46,7 @@ async function fetchHabiticaUser(userID, tokenAPI, Path='user', method='GET', bo
             throw new Error(`Erro na API do Habitica: ${res.status} - ${errorMessage}`)
         }
 
-        if (res.status === 204){
+        if (res.status === 204) {
             return { success: true, message: `Operação ${method} realizada com sucesso`, }
         }
 
@@ -63,3 +63,5 @@ async function fetchHabiticaUser(userID, tokenAPI, Path='user', method='GET', bo
 module.exports = {
     fetchHabiticaUser
 }
+
+

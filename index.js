@@ -2,11 +2,8 @@ const { Op } = require('sequelize');
 const { Client, codeBlock, Collection, Events, GatewayIntentBits } = require('discord.js');
 
 // dotenv
-const dotenv = require('dotenv')
-dotenv.config()
-const { TOKEN } = process.env
+require('dotenv').config()
 const connectToMongo = require('./database/db');
-
 
 // Importação dos Comandos
 const fs = require("node:fs")
@@ -56,5 +53,4 @@ client.once(Events.Ready, async () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 });
 
-
-client.login(TOKEN)
+client.login(process.env.TOKEN)

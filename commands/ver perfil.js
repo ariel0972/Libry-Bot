@@ -1,11 +1,9 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
 const User = require("../database/models/user");
 const Canvas = require('@napi-rs/canvas');
-const { captureAvatar } = require("../Habitica_avatar");
 const { GerarAvatar } = require("../costumeAvatar.js")
 const { request } = require("undici");
 const { fetchHabiticaUser } = require("../utils/habiticaPlayer.js");
-const { AUTHOR_ID } = process.env
 
 module.exports = {
     cooldown: 10,
@@ -25,19 +23,9 @@ module.exports = {
             return
         }
         
-        const HEADERS = {
-            "x-client": `${AUTHOR_ID}-BotDiscord`,
-            "x-api-user": user.habiticaUserId,
-            "x-api-key": user.habiticaToken,
-            'Content-Type': "application/json",
-        }
-
-        const resUser = await fetch('https://habitica.com/api/v3/user', {
-            method: "GET",
-            headers: HEADERS,
-        })
-        const data = await resUser.json()
-        const gameClass = data.data.stats.class
+        // coltando os dados do Habitica usando uma função
+        const USER = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken)
+        const gameClass = USER.stats.class
         let classePath
 
         switch (gameClass) {
@@ -55,12 +43,8 @@ module.exports = {
                 break;
         }
 
-        const resDaily = await fetch("https://habitica.com/api/v3/tasks/user?type=dailys", {
-            method: "get",
-            headers: HEADERS,
-        })
-        const dataDaily = await resDaily.json()
-        const dailys = dataDaily.data.filter(daily => {
+        const resDaily = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'tasks/user?type=dailys')
+        const dailys = resDaily.filter(daily => {
             if (daily.isDue === true) {
                 return true
             }
@@ -70,40 +54,31 @@ module.exports = {
             }
         }).length
 
-        const dailysMax = dataDaily.data.filter(daily => {
+        const dailysMax = resDaily.filter(daily => {
             if (daily.isDue === true) {
                 return true
             }
         }).length
 
         // DADOS DO GRUPOS
-        const party = await fetch(`https://habitica.com/api/v3/groups/party`, {
-            method: 'GET',
-            headers: HEADERS
-        });
-        const partyData = await party.json();
-        const pickQuest = partyData.data.quest.progress.collect
-        const questkey = partyData.data.quest.key // Chave do boss atual
+        const party = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'groups/party')
+        const pickQuest = party.quest.progress.collect
+        const questkey = party.quest.key
 
         let QuestStatus = "Sem Missão"
 
-        if (!questkey || partyData.data.quest.active == false) {
+        if (!questkey || party.quest.active == false) {
             QuestStatus = "Sem missão"
         }
 
         // DADOS DE CONTEUDO
-        const content = await fetch("https://habitica.com/api/v3/content", {
-            method: "get",
-            headers: HEADERS,
-        })
-
-        const contData = await content.json();
-        const questInfo = contData.data.quests[questkey]
+        const content = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'content')
+        const questInfo = content.quests[questkey]
 
         if (!questInfo) {
             QuestStatus = "Erro ao Buscar Missão"
         } else if (questInfo.boss) {
-            const bossHp = partyData.data.quest.progress.hp
+            const bossHp = party.quest.progress.hp
             const bossMaxHp = questInfo.boss.hp || 0
             const progressBoss = ((1 - bossHp / bossMaxHp) * 100).toFixed(1)
 
@@ -133,28 +108,28 @@ module.exports = {
         const classe = await Canvas.loadImage(classePath)
         
         const avatarHabitica = {
-            head: data.data.items.gear.costume.head,
-            armor: data.data.items.gear.costume.armor,
-            weapon: data.data.items.gear.costume.weapon,
-            shield: data.data.items.gear.costume.shield,
-            back: data.data.items.gear.costume.back,
-            body: data.data.items.gear.costume.body,
-            eyewear: data.data.items.gear.costume.eyewear,
-            headAccessory: data.data.items.gear.costume.headAccessory,
+            head: USER.items.gear.costume.head,
+            armor: USER.items.gear.costume.armor,
+            weapon: USER.items.gear.costume.weapon,
+            shield: USER.items.gear.costume.shield,
+            back: USER.items.gear.costume.back,
+            body: USER.items.gear.costume.body,
+            eyewear: USER.items.gear.costume.eyewear,
+            headAccessory: USER.items.gear.costume.headAccessory,
             preferences: {
                 hair: {
-                    color: data.data.preferences.hair.color,
-                    base: data.data.preferences.hair.base,
-                    bangs: data.data.preferences.hair.bangs,
-                    beard: data.data.preferences.hair.beard,
-                    mustache: data.data.preferences.hair.mustache,
-                    flower: data.data.preferences.hair.flower
+                    color: USER.preferences.hair.color,
+                    base: USER.preferences.hair.base,
+                    bangs: USER.preferences.hair.bangs,
+                    beard: USER.preferences.hair.beard,
+                    mustache: USER.preferences.hair.mustache,
+                    flower: USER.preferences.hair.flower
                 },
-                skin: data.data.preferences.skin,
-                shirt: data.data.preferences.shirt,
-                chair: data.data.preferences.chair,
-                size: data.data.preferences.size,
-                background: data.data.preferences.background
+                skin: USER.preferences.skin,
+                shirt: USER.preferences.shirt,
+                chair: USER.preferences.chair,
+                size: USER.preferences.size,
+                background: USER.preferences.background
             }
         }
 
@@ -168,16 +143,16 @@ module.exports = {
         ctx.drawImage(coin, 360, 686, 23, 23)
 
         const status = {
-            name: data.data.auth.local.username,
+            name: USER.auth.local.username,
             class: gameClass == 'wizard' ? "Mago" : gameClass == 'rogue' ? 'Assassino' : gameClass == 'healer' ? 'Curandeiro' : 'Guerreiro',
-            lvl: data.data.stats.lvl,
-            hp: data.data.stats.hp,
-            hpMax: data.data.stats.maxHealth,
-            mana: data.data.stats.mp,
-            manaMax: data.data.stats.maxMP,
-            xp: data.data.stats.exp,
-            xpMax: data.data.stats.toNextLevel,
-            gold: data.data.stats.gp,
+            lvl: USER.stats.lvl,
+            hp: USER.stats.hp,
+            hpMax: USER.stats.maxHealth,
+            mana: USER.stats.mp,
+            manaMax: USER.stats.maxMP,
+            xp: USER.stats.exp,
+            xpMax: USER.stats.toNextLevel,
+            gold: USER.stats.gp,
             quest: QuestStatus,
             dailys: dailys,
             Maxday: dailysMax,
@@ -199,12 +174,12 @@ module.exports = {
         ctx.strokeRect(86, 646, (312 * status.xp / status.xpMax), 0)
 
         // Infos
-        ctx.font = "12px Roboto"
+        ctx.font = "11px Roboto"
         ctx.fillStyle = 'white'
         ctx.textAlign = 'left'
         ctx.fillText(`${status.hp.toFixed(0)} / ${status.hpMax}`, 404, 572, 80) // vida
         ctx.fillText(`${status.mana.toFixed(0)} / ${status.manaMax}`, 404, 612, 80) // mana
-        ctx.fillText(`${status.xp.toFixed(0)} / ${status.xpMax}`, 404, 650, 65) // xp
+        ctx.fillText(`${status.xp.toFixed(0)} / ${status.xpMax}`, 404, 650, 55) // xp
 
         // Nome e nível
         ctx.font = 'bold 15px Roboto'
@@ -227,7 +202,7 @@ module.exports = {
         const Profile = interaction.user.avatarURL({ dynamic: true, format: "png", size: 1024 })
 
         const userEmbed = new EmbedBuilder()
-            .setTitle(`${data.data.auth.local.username}`)
+            .setTitle(`${USER.auth.local.username}`)
             .setAuthor({ name: interaction.user.displayName, iconURL: Profile })
             .setImage('attachment://avatar_card.png')
             .setColor("#925Cf3")

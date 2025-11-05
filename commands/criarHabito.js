@@ -2,7 +2,6 @@ const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = r
 const User = require("../database/models/user");
 const fs = require("node:fs")
 const path = require("node:path")
-const { captureAvatar } = require("../Habitica_avatar");
 
 
 module.exports = {

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require("discord.js")
 const User = require("../database/models/user");
+const { fetchHabiticaUser } = require("../utils/habiticaPlayer");
 const { AUTHOR_ID } = process.env
 
 module.exports = {
@@ -19,9 +20,7 @@ module.exports = {
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction) {
-        const user = await User.findOne({ discordId: interaction.user.id });
-        const URLbase = 'https://habitica.com/api/v3'
-
+        const user = await User.findOne({ discordId: interaction.user.id })
 
         const dest = interaction.options.getUser('membro')
         const gold = interaction.options.getNumber('quantidade')
@@ -35,47 +34,23 @@ module.exports = {
             return await interaction.reply("❌ O destinatário não está vinculado ao bot.")
         }
 
-        const HEADERS = (userId, Token) => ({
-            "x-api-user": userId,
-            "x-api-key": Token,
-            'Content-Type': "application/json",
-            "x-client": `${AUTHOR_ID}-BotDiscord`
-        })
+        const resUser = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken)
+        const userName = resUser.auth.local.username
 
-        const resUser = await fetch(`${URLbase}/user`, {
-            method: 'GET',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken)
-        })
-        const sendData = await resUser.json()
-        const userName = sendData.data.auth.local.username
-
-        const resDest = await fetch(`${URLbase}/user`, {
-            method: 'GET',
-            headers: HEADERS(destID.habiticaUserId, destID.habiticaToken)
-        })
-        const destData = await resDest.json()
-        const destGold = destData.data.stats.gp
-        const destName = destData.data.auth.local.username
+        const resDest = await fetchHabiticaUser(destID.habiticaUserId, destID.habiticaToken)
+        const destGold = resDest.stats.gp
+        const destName = resDest.auth.local.username
 
         const goldTotal = destGold - gold
 
-        await fetch(`${URLbase}/user`, {
-            method: 'PUT',
-            headers: HEADERS(destID.habiticaUserId, destID.habiticaToken),
-            body: JSON.stringify({
-                "stats.gp": goldTotal < 0 ? 0 : goldTotal
-            })
-        })
-
-        await fetch(`${URLbase}/groups/party/chat`, {
-            method: 'POST',
-            headers: HEADERS(user.habiticaUserId, user.habiticaToken),
-            body: JSON.stringify({
-                'message': `> @${userName} RETIROU **${gold.toFixed(2)} 🪙** DE @${destName}`
-            })
+        await fetchHabiticaUser(destID.habiticaUserId, destID.habiticaToken, 'user', "PUT",{
+            "stats.gp": goldTotal < 0 ? 0 : goldTotal
         })
 
         await interaction.reply(`Você retirou **${gold.toFixed(2)}** de ${dest.displayName}`)
+        await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'groups/party/chat', 'POST', {
+            message: `> @${userName} RETIROU **${gold.toFixed(2)} 🪙** de @${destName}`
+        })
         
     }
 }
