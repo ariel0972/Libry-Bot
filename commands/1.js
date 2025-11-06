@@ -8,6 +8,8 @@ module.exports = {
     .setDescription("Deposita "),
 
     async execute(interaction){
-        interaction.reply(`oi!`);
+        interaction.reply('banco resetado')
+
+        User.deleteMany()
     }
 }
