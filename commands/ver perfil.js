@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
-const User = require("../database/models/user");
+const User = require("../database/models/user.js");
 const Canvas = require('@napi-rs/canvas');
 const { GerarAvatar } = require("../costumeAvatar.js")
 const { request } = require("undici");

@@ -5,8 +5,8 @@ const { fetchHabiticaUser } = require("../utils/habiticaPlayer")
 module.exports = {
     cooldown: 10,
     data: new SlashCommandBuilder()
-        .setName("depositar")
-        .setDescription("Deposite suas moedas no banco do habitica")
+        .setName("sacar")
+        .setDescription("Saque seu dinheiro do banco do habitica")
         .addNumberOption(option => option
             .setName('quantidade')
             .setDescription('Quantidade a ser depositada')
@@ -24,22 +24,22 @@ module.exports = {
         }
 
         try {
+            if(qtd > user.bank) {
+                return await interaction.editReply('Você nõa tem saldo o suficiente!')
+            }
+
             const resUser = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken)
             const userGold = resUser.stats.gp
 
-            if (qtd > userGold) {
-                return await interaction.editReply('❌ Você não tem ouro o suficiente!')
-            }
+            const goldAtual = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, "user", "PUT", { 'stats.gp': userGold + qtd })
 
-            const goldAtual = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, "user", "PUT", { 'stats.gp': userGold - qtd })
-
-            user.bank += qtd
+            user.bank -= qtd
             await user.save()
 
             const embed = new EmbedBuilder()
                 .setColor('#77f4c7')
                 .setTitle(`Banco de ${interaction.user.displayName}`)
-                .setDescription(`💸 Você depositou ${qtd.toFixed(2)} no banco! 💸`)
+                .setDescription(`💰 Você sacou **🪙 ${qtd.toFixed(2)}** do banco!💰`)
                 .addFields(
                     { name: "Saldo no Habitica", value: `🪙 ${goldAtual.stats.gp.toFixed(2)}`, inline: true },
                     { name: "Saldo no Banco", value: `🪙 ${user.bank.toFixed(2)}`, inline: true }
@@ -48,7 +48,7 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] })
         } catch (error) {
             console.error("Erro ao depositar:", error)
-            await interaction.editReply('Houve um erro processar seu depósito. Tente novamente.')
+            await interaction.editReply('Houve um erro processar seusaque. Tente novamente.')
         }
     }
 }

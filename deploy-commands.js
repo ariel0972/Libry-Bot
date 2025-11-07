@@ -1,5 +1,4 @@
 const { REST, Routes } = require("discord.js")
-
 const { DefaultDeviceProperty } = require('discord.js')
 
 // dotenv
@@ -15,13 +14,13 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith("
 
 const commands = []
 
-for(const file of commandFiles){
+for (const file of commandFiles) {
     const command = require(`./commands/${file}`)
     commands.push(command.data.toJSON())
 }
 
 // Instancia Rest
-const rest = new REST({version:"10"}).setToken(TOKEN);
+const rest = new REST({ version: "10" }).setToken(TOKEN);
 
 // Deploy
 (async () => {
@@ -30,11 +29,11 @@ const rest = new REST({version:"10"}).setToken(TOKEN);
 
         const data = await rest.put(
             Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-            {body: commands}
+            { body: commands }
         )
         console.log(`Comandos registrados com sucesso!`)
     }
-    catch (error){
+    catch (error) {
         console.error(error)
     }
 })()
