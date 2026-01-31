@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js")
 const Checkin = require('#checkin')
-const User = require("../database/models/user")
+const User = require("#user")
 
 function getStartOfWeek(date) {
     const startOfWeek = new Date(date);

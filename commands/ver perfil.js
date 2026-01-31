@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
 const User = require("../database/models/habitica.js");
 const Canvas = require('@napi-rs/canvas');
-const { GerarAvatar } = require("../costumeAvatar.js")
+const { GerarAvatar } = require("#avatar")
 const { fetchHabiticaUser } = require("../utils/habiticaPlayer.js");
 
 module.exports = {

@@ -23,7 +23,11 @@
     "libry-bot"
   ],
   "imports": {
-    "#checkin": "./database/models/check.js"
+    "#checkin": "./database/models/check.js",
+    "#user": "./database/models/user.js",
+    "#habitica": "./database/models/habitica.js",
+    "#avatar": "./utils/costumeAvatar.js",
+    "#API": "./utils/habiticaPlayer.js"
   },
   "author": "Eduardo Ariel",
   "license": "ISC",
