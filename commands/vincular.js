@@ -1,5 +1,5 @@
-const { SlashCommandBuilder } = require("discord.js")
-const User = require('../database/models/user')
+const { SlashCommandBuilder, MessageFlags } = require("discord.js")
+const User = require('../database/models/habitica')
 
 
 module.exports = {
@@ -18,21 +18,21 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const discordId = interaction.user.id;
-        const habiticaUserId = interaction.options.getString('userid');
-        const habiticaToken = interaction.options.getString('token');
+        const discordId = interaction.user.id
+        const habiticaUserId = interaction.options.getString('userid')
+        const habiticaToken = interaction.options.getString('token')
 
         try {
             const existing = await User.findOneAndUpdate(
                 { discordId },
                 { habiticaUserId, habiticaToken },
                 { upsert: true, new: true }
-            );
+            )
 
-            await interaction.reply("Seus dados do Habitica foram salvos com sucesso!");
+            await interaction.reply({ content: "Seus dados do Habitica foram salvos com sucesso!", flags: MessageFlags.Ephemeral })
         } catch (err) {
-            console.error(err);
-            await interaction.reply("Erro ao salvar os dados. Tente novamente.");
+            console.error(err)
+            await interaction.reply("Erro ao salvar os dados. Tente novamente.")
         }
     }
 }

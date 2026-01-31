@@ -11,17 +11,20 @@
     "sequelize": "^6.37.5",
     "undici": "^7.11.0"
   },
-  "name": "Libry-bot",
+  "name": "libry-bot",
   "version": "1.0.1",
   "main": "index.js",
   "scripts": {
-    "dev": "node index.js --w",
+    "dev": "node --watch index.js",
     "deploy-test": "node deploy-commands.js",
     "deploy": "node deploy.js"
   },
   "keywords": [
-    "Libry-bot"
+    "libry-bot"
   ],
+  "imports": {
+    "#checkin": "./database/models/check.js"
+  },
   "author": "Eduardo Ariel",
   "license": "ISC",
   "description": ""

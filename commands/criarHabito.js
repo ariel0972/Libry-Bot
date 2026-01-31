@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
-const User = require("../database/models/user");
+const User = require("../database/models/habitica");
 const fs = require("node:fs")
-const path = require("node:path")
+const path = require("node:path");
+const { fetchHabiticaUser } = require("../utils/habiticaPlayer");
 
 
 module.exports = {
@@ -48,22 +49,10 @@ module.exports = {
         const user = await User.findOne({ discordId: interaction.user.id });
         if (!user) return interaction.respond([])
 
-        // Cabeçalho da requisição da API
-        const HEADERS = {
-            "x-client": `${user.habiticaUserId}-BotDiscord`,
-            "x-api-user": user.habiticaUserId,
-            "x-api-key": user.habiticaToken,
-            'Content-Type': "application/json",
-        }
 
         // Testando a requisição API e enviando a responsta ao discord.js
         try {
-            const res = await fetch('https://habitica.com/api/v3/tags', {
-                method: "GET",
-                headers: HEADERS
-            })
-            const data = await res.json()
-            if (!res.ok) return interaction.respond([])
+            const data = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, "tags")
 
             const filtered = data.data.filter(tag => tag.name.toLowerCase().includes(focus.toLowerCase()))
                 .slice(0, 25)

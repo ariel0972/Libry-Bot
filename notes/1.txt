@@ -1,0 +1,156 @@
+  const stats = {
+            [desafiante.id]: {
+                nome: desafiante.displayName,
+                habitica: user,
+                id: desafiante.id,
+                hp: 100,
+                mp: {
+                    atual: 20 + data.data.stats.int * 1.5,
+                    max: 20 + data.data.stats.int * 1.5,
+                },
+                cd: 0,
+                classe: data.data.stats.class,
+                for: Math.floor(2 + data.data.stats.str + data.data.stats.lvl / 2),
+                int: Math.floor(1 + data.data.stats.int + data.data.stats.lvl / 2),
+                con: Math.floor(3 + data.data.stats.con + data.data.stats.lvl / 2),
+                per: Math.floor(data.data.stats.per + data.data.stats.lvl / 2),
+                lvl: data.data.stats.lvl,
+                gp: data.data.stats.gp,
+                defendendo: false,
+                magia: {
+                    fireBall: false,
+                    etérea: false,
+                    atordoar: false,
+                    smash: false,
+                    HighDef: false,
+                    doubleSmash: false,
+                    stealth: false,
+                    picpocket: false,
+                    critHit: false,
+                    overHeal: false,
+                    moreDef: false,
+                    blessing: false,
+                },
+            },
+            [contraBot ? "BOT" : alvo.id]: contraBot
+                ? (() => {
+                    const atrBot = {
+                        simples: { hp: 50, mp: 10, for: 6, int: 6, con: 8, per: 6, lvl: 10 },
+                        facil: { hp: 60, mp: 25, for: 10, int: 12, con: 12, per: 11, lvl: 25 },
+                        medio: { hp: 75, mp: 40, for: 20, int: 22, con: 24, per: 22, lvl: 50 },
+                        dificil: { hp: 100, mp: 60, for: 25, int: 28, con: 36, per: 35, lvl: 70 },
+                        desafiador: { hp: 120, mp: 90, for: 35, int: 34, con: 45, per: 50, lvl: 100 },
+                    };
+
+                    const config = atrBot[dif];
+
+                    return {
+                        nome: "🤖 Bot Habitican",
+                        habitica: null,
+                        id: "BOT",
+                        hp: config.hp,
+                        mp: config.mp,
+                        cd: 0,
+                        for: config.for,
+                        int: config.int,
+                        con: config.con,
+                        per: config.per,
+                        lvl: config.lvl,
+                        defendendo: false,
+                        magia: {
+                            fireBall: false,
+                            etérea: false,
+                            atordoar: false,
+                            smash: false,
+                            HighDef: false,
+                            doubleSmash: false,
+                            stealth: false,
+                            picpocket: false,
+                            critHit: false,
+                            overHeal: false,
+                            moreDef: false,
+                            blessing: false,
+                        },
+                    };
+                })()
+                : {
+                    nome: alvo.displayName,
+                    habitica: oponente,
+                    id: alvo.id,
+                    hp: 100,
+                    mp: {
+                        atual: 20 + dataAlvo.data.stats.int * 1.5,
+                        max: 20 + dataAlvo.data.stats.int * 1.5,
+                    },
+                    cd: 0,
+                    classe: dataAlvo.data.stats.class,
+                    for: Math.floor(2 + dataAlvo.data.stats.str + dataAlvo.data.stats.lvl / 2),
+                    int: Math.floor(2 + dataAlvo.data.stats.int + dataAlvo.data.stats.lvl / 2),
+                    con: Math.floor(2 + dataAlvo.data.stats.con + dataAlvo.data.stats.lvl / 2),
+                    per: Math.floor(2 + dataAlvo.data.stats.per + dataAlvo.data.stats.lvl / 2),
+                    lvl: dataAlvo.data.stats.lvl,
+                    gp: dataAlvo.data.stats.gp,
+                    defendendo: false,
+                    magia: {
+                        fireBall: false,
+                        etérea: false,
+                        atordoar: false,
+                        smash: false,
+                        HighDef: false,
+                        doubleSmash: false,
+                        stealth: false,
+                        picpocket: false,
+                        critHit: false,
+                        overHeal: false,
+                        moreDef: false,
+                        blessing: false,
+                    },
+                },
+        }
+
+
+
+
+
+
+
+        if (contraBot) {
+                const options = ['cara', 'coroa']
+                escolha = options[Math.floor(Math.random() * 2)]
+                resultado = options[Math.floor(Math.random() * 2)]
+                turno = escolha === resultado ? desafiante.id : stats["BOT"]
+                coroa = turno
+                cara = turno === desafiante.id ? stats["BOT"] : desafiante.id
+
+                if (turno === "BOT") {
+                    setTimeout(async () => {
+                        if (stats['BOT'].cd > 0) {
+                            stats["BOT"].cd--
+                            textoBot = `🤖 O Bot está em Cooldown`;
+                        }
+
+                        let acao = "atacar"
+
+                        let textoBot = "";
+                        if (acao === "atacar") {
+                            let dano = Math.floor(Math.random() * 5 + desafiado.for * 0.8)
+                            const crit = Math.random() < 0.15
+                            if (crit) dano = Math.floor(dano * 1.5)
+                            const def = player.defendendo ? player.con * 1.5 : player.con
+                            const danoFinal = Math.max(0, dano - def)
+                            player.hp -= danoFinal;
+                            player.defendendo = false
+                            textoBot = `🤖 O Bot atacou e causou **${danoFinal} de dano!. ${crit ? "💥 CRITICO" : ""} **`
+                        }
+
+                        turno = player.id;
+                        duelEmbed.setDescription(`${textoBot}\n\nTurno de <@${turno}>`);
+                        duelEmbed.spliceFields(0, 2,
+                            { name: player.nome, value: `❤️ ${Math.max(0, player.hp)} HP`, inline: true },
+                            { name: desafiado.nome, value: `❤️ ${Math.max(0, desafiado.hp)} HP`, inline: true }
+                        );
+
+                        await msg.edit({ embeds: [duelEmbed] });
+                    }, 2000)
+                }
+            }

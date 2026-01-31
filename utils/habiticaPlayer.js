@@ -1,7 +1,6 @@
 const dotenv = require('dotenv')
 dotenv.config()
 const { AUTHOR_ID, AUTHOR_TOKEN } = process.env
-// import User from '../database/models/user'
 
 /**
  * @typedef { 'user' | 'tasks/user' | 'tasks/{ID}' | 'groups/party/chat' | 'groups/party'} path

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require("discord.js")
-const User = require("../database/models/user");
+const User = require("../database/models/habitica");
 const { fetchHabiticaUser } = require("../utils/habiticaPlayer");
 const { AUTHOR_ID } = process.env
 

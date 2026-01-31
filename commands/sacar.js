@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js")
-const User = require("../database/models/user")
+const User = require("../database/models/habitica")
 const { fetchHabiticaUser } = require("../utils/habiticaPlayer")
 
 module.exports = {

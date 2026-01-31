@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, EmbedBuilder } = require("discord.js")
-const User = require("../database/models/user")
+const User = require("../database/models/habitica")
 
 module.exports = {
     cooldown: 10,

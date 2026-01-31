@@ -1,8 +1,7 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder, AttachmentBuilder } = require("discord.js")
-const User = require("../database/models/user.js");
+const User = require("../database/models/habitica.js");
 const Canvas = require('@napi-rs/canvas');
 const { GerarAvatar } = require("../costumeAvatar.js")
-const { request } = require("undici");
 const { fetchHabiticaUser } = require("../utils/habiticaPlayer.js");
 
 module.exports = {
@@ -65,15 +64,17 @@ module.exports = {
         const pickQuest = party.quest.progress.collect
         const questkey = party.quest.key
 
-        let QuestStatus = "Sem Missão"
+        let QuestStatus
 
         if (!questkey || party.quest.active == false) {
-            QuestStatus = "Sem missão"
+            QuestStatus = "Sem missão"  
         }
 
         // DADOS DE CONTEUDO
         const content = await fetchHabiticaUser(user.habiticaUserId, user.habiticaToken, 'content')
         const questInfo = content.quests[questkey]
+
+        console.log(party.quest)
 
         if (!questInfo) {
             QuestStatus = "Erro ao Buscar Missão"
@@ -158,7 +159,6 @@ module.exports = {
             Maxday: dailysMax,
         }
 
-
         //stats bar
         ctx.lineJoin = 'bevel'
         ctx.lineWidth = 18
@@ -206,6 +206,13 @@ module.exports = {
             .setAuthor({ name: interaction.user.displayName, iconURL: Profile })
             .setImage('attachment://avatar_card.png')
             .setColor("#925Cf3")
+
+        if (!questInfo) {
+            await interaction.editReply({
+                embeds: [userEmbed],
+                files: [foto]
+            })
+        }
 
         if (questInfo.boss) {
             await interaction.editReply({
